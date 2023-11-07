@@ -14,7 +14,7 @@
     <h2>Pagination example in a simple HTML page without Navigo and JS-modules</h2>
     <p>If you <b>don't</b> like the Navigo/JS-modules setup used this semester, copy this file into somewhere else, and
       delete the demo project you cloned </p>
-    <do>If you <b>do prefer</b> the router setup, just delete this file from the "project"</p>
+    <p>If you <b>do prefer</b> the router setup, just delete this file from the "project"</p>
       <table class="table">
         <thead>
           <tr id="header-row">
@@ -38,20 +38,38 @@
     document.getElementById('header-row').onclick = function (evt) {
       const target = evt.target      
       if (!target.id.startsWith("sort-")) return
-      //TODO Add the missing sort functionality here
+      //TODO: Add the missing sort functionality here
+      const targetSortColumn = target.id.substring(target.id.indexOf('-') + 1);
+      if (targetSortColumn==sortColumn) {
+        sortDirection = (sortDirection=='asc')?'desc':'asc';
+      } else {
+        sortColumn = targetSortColumn;
+        sortDirection = 'asc';
+      }
       
       fetchData();
     };
 
     async function fetchData(page = 0, size = PAGE_SIZE, sort = sortColumn) {
-      const data = await fetch(`${API_ENDPOINT}?page=${page}&size=${size}&sort=${sortColumn},${sortDirection}`)
-        .then(response => response.json()) //TODO: Handle error cases
-      displayData(data.content);
-      displayPagination(data.totalPages, page)
+      //console.log(`fetch(${API_ENDPOINT}?page=${page}&size=${size}&sort=${sortColumn},${sortDirection})`);
+      try {
+        const data = await fetch(`${API_ENDPOINT}?page=${page}&size=${size}&sort=${sortColumn},${sortDirection}`)
+                .then(handleHttpErrors)
+        //.then(response => response.json()) //TODO: Handle error cases
+
+        displayData(data.content);
+        displayPagination(data.totalPages, page);
+      } catch (err) {
+        if (err.apiError){
+          console.log("Full API error: ", err.apiError)
+        } else {
+          console.log(err.message)
+        }
+      }
     }
 
     function displayData(books) {
-      tblRows.innerHTML = books.map(book => `<tr><td>${book.author}</td><td>${book.title}</td></tr>`).join('');
+      tblRows.innerHTML = books.map(book => `<tr><td>${escapeHTML(book.author)}</td><td>${escapeHTML(book.title)}</td></tr>`).join('');
     }
 
     function displayPagination(totalPages, currentPage, size) {
@@ -88,6 +106,43 @@
 
     fetchData();//Initial call to the backend
 
+    async function handleHttpErrors(res) {
+      if (!res.ok) {
+        const errorResponse = await res.json();
+        const error = new Error(errorResponse.message)
+        error.apiError = errorResponse
+        throw error
+      }
+      return res.json()
+    }
+
+    function escapeHTML(string) {
+      if (!string) return "";
+
+      return string.replaceAll(`&`, "&amp;")
+              .replaceAll(`>`, "&gt;")
+              .replaceAll(`<`, "&lt;")
+              .replaceAll(`"`, "&quot;")
+              .replaceAll(`/`, "&#039;");
+    }
+
+    // const data = {author: "lis Benson", title: "16:01"};
+    // const options = makeOptions("POST",data);
+    // fetch("https://somewhereoutthere/books",options);
+
+    function makeOptions(method, body) {
+      const opts = {
+        method: method,
+        headers: {
+          "Content-type": "application/json",
+          "Accept": "application/json"
+        }
+      }
+      if (body) { //Observe how we can add new fields to an object when needed
+        opts.body = JSON.stringify(body);
+      }
+      return opts;
+    }
   </script>
 
 </body>
