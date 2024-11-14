@@ -20,7 +20,7 @@
           <tr id="header-row">
             <th style="width:25%">Author <i id="sort-author" data-sort_direction="asc" class="fa fa-sort"></i></th>
             <th>Title <i id="sort-title" data-sort_direction="asc" class="fa fa-sort"></i></th>
-            </th>
+            
           </tr>
         </thead>
         <tbody id="tbl-rows"></tbody>
@@ -40,13 +40,22 @@
       if (!target.id.startsWith("sort-")) return
       //TODO: Add the missing sort functionality here
       const targetSortColumn = target.id.substring(target.id.indexOf('-') + 1);
+      if (target.dataset.sort_direction == 'asc' && targetSortColumn == sortColumn){
+        target.dataset.sort_direction = 'desc';
+        sortDirection = 'desc';
+      } else {
+        sortColumn = targetSortColumn;
+        target.dataset.sort_direction = 'asc';
+        sortDirection = 'asc';
+      }
+      /*
       if (targetSortColumn==sortColumn) {
         sortDirection = (sortDirection=='asc')?'desc':'asc';
       } else {
         sortColumn = targetSortColumn;
         sortDirection = 'asc';
       }
-      
+      */
       fetchData();
     };
 
